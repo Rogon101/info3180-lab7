@@ -45,23 +45,37 @@ const Home = Vue.component('home', {
 
 const Upload_Form = Vue.component('upload-form', {
     template: `
-        <form id='uploadForm' @submit.prevent="uploadPhoto">
-            <div class="form-group">   
-                <label for="description">Description</label>
-                <textarea name='description' id="description" class="form-control" rows="4" ></textarea>
+        <div>
+            <div v-if="message !== '' class="alert alert-success" role="alert">
+                {{ message }}
             </div>
-            <div class="form-group">   
-                <label for="photo">Photo</label>
-                <input type="file" name="photo" id="photo" class="form-control"></input>
+            <div v-else-if="errors.length !== 0" class="alert alert-danger" role="alert">
+                <ul>
+                    <li v-for="error in errors">{{ error }}</li>
+                </ul>
             </div>
-            <button type="submit" class="btn btn-primary">Submit</button>
-        </form>
+            
+            <form id='uploadForm' @submit.prevent="uploadPhoto">
+                <div class="form-group">   
+                    <label for="description">Description</label>
+                    <textarea name='description' id="description" class="form-control" rows="4" ></textarea>
+                </div>
+                <div class="form-group">   
+                    <label for="photo">Photo</label>
+                    <input type="file" name="photo" id="photo" class="form-control"></input>
+                </div>
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+        </div>
     `,
 
     methods: {
         uploadPhoto: function() {
             let uploadForm = document.getElementById('uploadForm');
             let form_data = new FormData(uploadForm);
+            let self = this;
+            self.message = "";
+            self.errors = [];
 
             console.log(form_data);
 
@@ -73,18 +87,22 @@ const Upload_Form = Vue.component('upload-form', {
                 },
                 credentials: 'same-origin'
             })
-            .then(response => {
-                return response.json();
-            })
+            .then(resp => resp.json())
             .then(jsonResponse => {
-                //Display a success message
-                console.log(jsonResponse);
+                if (jsonResponse.errors) {
+                    self.errors = jsonResponse.errors;
+                } else {
+                    self.message = jsonResponse.message;
+                }
             })
-            .catch(error => {
-                console.log(error);
-            });
+            .catch(errors => console.log(errors));
         }
-
+    },
+    data: function() {
+        return {
+            message: '',
+            errors: []
+        }
     }
 });
 
